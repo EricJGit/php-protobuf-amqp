@@ -1,0 +1,14 @@
+framework:
+    messenger:
+        transports:
+            lapin:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                serializer: App\Serializer\ProtobufSerializer
+                options:
+                    exchange:
+                        name: lapin
+                        type: fanout
+                    queues:
+                        lapin_command: ~
+        routing:
+            GPB\Model\Message: lapin

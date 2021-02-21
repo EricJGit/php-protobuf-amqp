@@ -1,0 +1,55 @@
+services:
+  php:
+    container_name: php
+    build:
+      context: ./
+      target: php
+    ports:
+      - 9003:9003
+    volumes:
+      - .:/var/www/html/
+    depends_on:
+      - rabbit
+    environment:
+      - XDEBUG_SESSION=PHPSTORM
+
+  php-consumer:
+    container_name: php-consumer
+    build:
+      context: ./
+      target: php
+      args:
+        PHP_IMAGE: php:8-cli
+    ports:
+      - 9004:9003
+    volumes:
+      - .:/var/www/html/
+    depends_on:
+      - rabbit
+    restart: always
+    environment:
+      - XDEBUG_SESSION=PHPSTORM
+    command: /var/www/html/bin/console messenger:consume lapin -vvv --time-limit=600 --limit=50 --memory-limit=256M
+
+  nginx:
+    container_name: nginx
+    image: bitnami/nginx:1.19-debian-10
+    ports:
+      - 8092:8080
+    volumes:
+      - ./docker/app.conf:/opt/bitnami/nginx/conf/server_blocks/app.conf
+      - .:/var/www/html/
+    depends_on:
+      - php
+
+  rabbit:
+    container_name: rabbit
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+      RABBITMQ_DEFAULT_USER: "rabbitmq"
+      RABBITMQ_DEFAULT_PASS: "rabbitmq"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - 5672:5672
+      - 15672:15672
